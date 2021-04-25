@@ -4,24 +4,28 @@
 
 using IdentityServer4;
 using IdentityServer4.Models;
+using System;
 using System.Collections.Generic;
 
 namespace FreeCourse.IdentityServer
 {
     public static class Config
     {
-        public static IEnumerable<ApiResource> ApiResources => new ApiResource[] {
-        new ApiResource("resourse_catalog"){ Scopes={ "catalog_fullpermission"}},
-        new ApiResource("photo_stock_catalog"){ Scopes={ "photo_stock_fullpermission"}},
-        new ApiResource(IdentityServerConstants.LocalApi.ScopeName)
-
-        };
+        public static IEnumerable<ApiResource> ApiResources => new ApiResource[] 
+               {
+                new ApiResource("resourse_catalog"){ Scopes={ "catalog_fullpermission"}},
+                new ApiResource("photo_stock_catalog"){ Scopes={ "photo_stock_fullpermission"}},
+                new ApiResource(IdentityServerConstants.LocalApi.ScopeName)
+              };
         public static IEnumerable<IdentityResource> IdentityResources =>
-                   new IdentityResource[]
-                   {
-             
-                   };
+         new IdentityResource[]
+            {
+                new IdentityResources.Email(),
+                new IdentityResources.OpenId(),
+                new IdentityResources.Profile(),
+                new IdentityResource(){Name="roles", DisplayName="Kullanıcı Rolleri", UserClaims=new[]{"role"}},
 
+            };
         public static IEnumerable<ApiScope> ApiScopes =>
             new ApiScope[]
             {
@@ -39,7 +43,18 @@ namespace FreeCourse.IdentityServer
                 ClientSecrets={ new Secret("secret".Sha256())},
                 AllowedGrantTypes=GrantTypes.ClientCredentials,
                 AllowedScopes={"catalog_fullpermission", "photo_stock_fullpermission", IdentityServerConstants.LocalApi.ScopeName }
+                },
 
+                new Client{
+                ClientName="Asp.Net Core MVC",
+                ClientId = "WebMvcClientForUser",
+                ClientSecrets={ new Secret("secret".Sha256())},
+                AllowedGrantTypes=GrantTypes.ResourceOwnerPassword,
+                AllowedScopes={IdentityServerConstants.StandardScopes.Email,IdentityServerConstants.StandardScopes.OpenId,IdentityServerConstants.StandardScopes.Profile,IdentityServerConstants.StandardScopes.OfflineAccess},
+                AccessTokenLifetime=1*60*60,
+                RefreshTokenExpiration=TokenExpiration.Absolute,
+                AbsoluteRefreshTokenLifetime=(int)(DateTime.Now.AddDays(60)-DateTime.Now).TotalSeconds,
+                RefreshTokenUsage=TokenUsage.ReUse
                 }
             };
     }
