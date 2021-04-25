@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace FreeCourse.Services.Catalog.Services
 {
-    internal class CategoryService:ICategoryService
+    public class CategoryService:ICategoryService
     {
         private readonly IMongoCollection<Category> _categoryCollection;
 
@@ -20,12 +20,14 @@ namespace FreeCourse.Services.Catalog.Services
         public CategoryService(IMapper mapper, IDatabaseSettings databaseSettings)
         {
             var client = new MongoClient(databaseSettings.ConnectionString);
+
             var database = client.GetDatabase(databaseSettings.DatabaseName);
-            _categoryCollection = database.GetCollection<Category>(databaseSettings.CategoryCollectioName);
+
+            _categoryCollection = database.GetCollection<Category>(databaseSettings.CategoryCollectionName);
             _mapper = mapper;
         }
 
-        public async Task<Response<List<CategoryDto>>> GetResponseAsync(){
+        public async Task<Response<List<CategoryDto>>> GetAllAsync(){
 
             var categories = await _categoryCollection.Find(category => true).ToListAsync();
 
@@ -33,22 +35,24 @@ namespace FreeCourse.Services.Catalog.Services
 
         }
 
-        public async Task<Response<CategoryDto>> CreataAsync(Category category) {
+        public async Task<Response<CategoryDto>> CreataAsync(CategoryDto categoryDto) {
 
+            var category = _mapper.Map<Category>(categoryDto);
            await _categoryCollection.InsertOneAsync(category);
 
             return Response<CategoryDto>.Success(_mapper.Map<CategoryDto>(category),200);
         }
 
-        public async Task<Response<CategoryDto>> GetById(string id) {
+        public async Task<Response<CategoryDto>> GetByIdAsync(string id)
+        {
             var category = await _categoryCollection.Find<Category>(x => x.Id == id).FirstOrDefaultAsync();
-            if (category==null)
+
+            if (category == null)
             {
-                return Response<CategoryDto>.Fail("CAtegory Not Found", 404);
+                return Response<CategoryDto>.Fail("Category not found", 404);
             }
 
-            return Response<CategoryDto>.Success(_mapper.Map<CategoryDto>(category), 204);
-
+            return Response<CategoryDto>.Success(_mapper.Map<CategoryDto>(category), 200);
         }
     }
 }
